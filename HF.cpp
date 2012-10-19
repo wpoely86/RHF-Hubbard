@@ -78,7 +78,7 @@ int main(int argc, char **argv){
    int iter = 0;
 
    //basic scf loop, easy peasy
-   while(convergence > 1.0e-14){
+   while(convergence > 1.0e-12){
 
       ++iter;
 
