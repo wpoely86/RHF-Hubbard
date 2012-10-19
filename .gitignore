@@ -1,0 +1,15 @@
+*~
+*.swp
+*.o
+*.txt
+*.pdf
+*.out
+*.png
+*.gif
+*.h5
+*.hdf5
+.gdb_history
+callgrind.out.*
+HF
+tags
+docs/
