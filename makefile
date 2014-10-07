@@ -11,23 +11,10 @@ BINNAME = HF
 CPPSRC	= HF.cpp\
             Matrix.cpp\
             Vector.cpp\
-            LibInt.cpp\
-            R.cpp\
-            Gauss.cpp\
-            input.cpp\
-            CI_SPM.cpp\
-            CI_SPPM.cpp\
-            CI_SPPM_m.cpp\
-            CI_TPM.cpp\
-            CI_TPPM.cpp\
-            CartInt.cpp\
-            Transform.cpp\
-            SI_SPM.cpp\
-            SI_TPM.cpp\
-            SphInt.cpp\
-            Tools.cpp\
             RSPM.cpp\
-            DIIS.cpp
+            DIIS.cpp\
+	    Hub.cpp\
+
 
 OBJ	= $(CPPSRC:.cpp=.o)
 
@@ -37,18 +24,18 @@ OBJ	= $(CPPSRC:.cpp=.o)
 
 BRIGHT_ROOT= .
 
-INCLUDE = ./include -I/usr/local/libint/2.0.0-stable/include -I/usr/local/libint/2.0.0-stable/include/libint2 
+INCLUDE = -Iinclude -I/usr/include/libint2
 
-LIBS= -L/usr/local/libint/2.0.0-stable/lib -llapack -lblas -lgmp -lgmpxx -lgsl -lhdf5 -lint2
+LIBS= -lhdf5 -lblas -llapack
 
-CC	= gcc
-CXX	= g++
+CC	= clang
+CXX	= clang++
 
 # -----------------------------------------------------------------------------
 #   Compiler & Linker flags
 # -----------------------------------------------------------------------------
-CFLAGS	= -I$(INCLUDE) -g -Wall
-LDFLAGS	= -g -Wall
+CFLAGS	= $(INCLUDE) -g -Wall -O2 -Wno-unused-variable
+LDFLAGS	= -g -Wall -O2
 
 
 # =============================================================================
