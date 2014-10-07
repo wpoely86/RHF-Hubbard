@@ -2,15 +2,9 @@
 #define VECTOR_H
 
 #include <iostream>
-#include <cstdlib>
-#include <cmath>
+#include <vector>
 
-using std::ostream;
-
-#include "lapack.h"
 #include "Matrix.h"
-
-class Vector;
 
 /**
  * Output stream operator overloaded, the usage is simple, if you want to print to a file, make an
@@ -21,7 +15,8 @@ class Vector;
  * @param output The stream to which you are writing (e.g. cout)
  * @param vector_p de Vector you want to print
  */
-ostream &operator<<(ostream &output,const Vector &vector_p);
+class Vector;
+std::ostream &operator<<(std::ostream &output,const Vector &vector_p);
 
 /**
  * @author Brecht Verstichel
@@ -30,12 +25,12 @@ ostream &operator<<(ostream &output,const Vector &vector_p);
  * corresponding to the different VectorType's that can be put in, it will automatically get the right dimension.
  * It is a wrapper around a pointer and redefines much used lapack and blas routines as memberfunctions
  */
-class Vector{
-
+class Vector
+{
    public:
 
       //construct with as input a dimension
-      Vector(int );
+      Vector(int);
 
       //construct with as input a Matrix
       Vector(Matrix &);
@@ -43,13 +38,17 @@ class Vector{
       //copy constructor
       Vector(const Vector &);
 
+      Vector(Vector &&);
+
       //destructor
-      virtual ~Vector();
+      virtual ~Vector() = default;
 
       //overload equality operator
       Vector &operator=(const Vector &);
 
-      Vector &operator=(double );
+      Vector &operator=(Vector &&);
+
+      Vector &operator=(double);
 
       //overload += operator
       Vector &operator+=(const Vector &);
@@ -59,7 +58,9 @@ class Vector{
 
       Vector &daxpy(double alpha,const Vector &);
 
-      Vector &operator/=(double );
+      Vector &operator/=(double);
+
+      Vector &operator*=(double);
 
       void diagonalize(Matrix &);
 
@@ -71,15 +72,19 @@ class Vector{
 
       void fill_Random();
 
+      void fill_Random(int seed);
+
       //get the pointer to the vector
       double *gVector();
 
       //const version
       const double *gVector() const;
 
-      int gn() const;
+      unsigned int gn() const;
 
       double sum() const;
+
+      double trace() const;
 
       double log_product() const;
 
@@ -88,17 +93,23 @@ class Vector{
       void dscal(double alpha);
 
       double min() const;
-      
+
       double max() const;
+
+      void invert();
+
+      void sqrt(int);
+
+      void symmetrize();
+
+      Vector &mprod(const Vector &,const Vector &);
+
+      void sort();
 
    private:
 
       //!pointer of doubles, contains the numbers, the vector
-      double *vector;
-
-      //!dimension of the vector
-      int n;
-
+      std::vector<double> vector;
 };
 
 #endif

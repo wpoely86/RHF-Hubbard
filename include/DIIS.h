@@ -2,9 +2,8 @@
 #define DIIS_H
 
 #include <iostream>
-#include <fstream>
-
-using std::ostream;
+#include <vector>
+#include <memory>
 
 #include "Matrix.h"
 #include "RSPM.h"
@@ -20,18 +19,18 @@ class DIIS {
     * @param output The stream to which you are writing (e.g. cout)
     * @param diis_p de DIIS you want to print
     */
-   friend ostream &operator<<(ostream &output,DIIS &diis_p);
+   friend std::ostream &operator<<(std::ostream &output,DIIS &diis_p);
 
    public:
       
       //constructor
-      DIIS();
+      DIIS() = default;
 
       //copy constructor
       DIIS(const DIIS &);
 
       //destructor
-      virtual ~DIIS();
+      virtual ~DIIS() = default;
 
       void push_comm(const RSPM &);
 
@@ -39,7 +38,7 @@ class DIIS {
 
       void construct();
 
-      const vector<RSPM> &gFD() const;
+      const std::vector<RSPM> &gFD() const;
 
       const RSPM &gFD(int) const;
 
@@ -54,17 +53,14 @@ class DIIS {
    private:
 
       //!array containing the commutator [F,D] for all the previous iterations
-      vector<RSPM> FD;
+      std::vector<RSPM> FD;
 
       //!array containing the Fock matrices of previous iterations
-      vector<RSPM> F;
+      std::vector<RSPM> F;
 
-      double *b;
+      std::vector<double> b;
 
-      Matrix *B;
-
-      int flag;
-
+      std::unique_ptr<Matrix> B;
 };
 
 #endif

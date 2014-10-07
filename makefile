@@ -34,7 +34,7 @@ CXX	= clang++
 # -----------------------------------------------------------------------------
 #   Compiler & Linker flags
 # -----------------------------------------------------------------------------
-CFLAGS	= $(INCLUDE) -g -Wall -O2 -Wno-unused-variable
+CFLAGS	= $(INCLUDE) -g -Wall -O2 -Wno-unused-variable -std=c++11
 LDFLAGS	= -g -Wall -O2
 
 

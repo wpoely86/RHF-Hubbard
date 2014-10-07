@@ -1,134 +1,99 @@
 #include <iostream>
-#include <fstream>
+#include <algorithm>
 #include <time.h>
 #include <cmath>
+#include <assert.h>
 
-using std::endl;
-using std::ostream;
-using std::ofstream;
-using std::ifstream;
-
-#include "include.h"
+#include "Vector.h"
+#include "lapack.h"
 
 /**
  * constructor that takes dimension as input
  * @param n dimension of the vector
  */
-Vector::Vector(int n){
-
-   this->n = n;
-
-   vector = new double [n];
-
+Vector::Vector(int n)
+{
+   vector.resize(n);
 }
 
 /**
  * Construct and initialize the Vector object by diagonalizing a Matrix object:
  */
-Vector::Vector(Matrix &matrix){
+Vector::Vector(Matrix &matrix)
+{
+   vector.resize(matrix.gn());
 
-   //allocate
-   this->n = matrix.gn();
-
-   vector = new double [n];
-
-   //initialize
-   char jobz = 'V';
-   char uplo = 'U';
-
-   int lwork = 3*n - 1;
-
-   double *work = new double [lwork];
-
-   int info;
-
-   dsyev_(&jobz,&uplo,&n,(matrix.gMatrix())[0],&n,vector,work,&lwork,&info);
-
-   delete [] work;
-
+   diagonalize(matrix);
 }
 
 /**
  * copy constructor 
  * @param vec_copy The vector you want to be copied into the object you are constructing
  */
-Vector::Vector(const Vector &vec_copy){
-
-   this->n = vec_copy.n;
-
-   vector = new double [n];
-
-   int inc = 1;
-
-   dcopy_(&n,vec_copy.vector,&inc,vector,&inc);
-
+Vector::Vector(const Vector &vec_copy)
+{
+   vector = vec_copy.vector;
 }
 
-
-/**
- * Destructor
- */
-Vector::~Vector(){
-
-   delete [] vector;
-
+Vector::Vector(Vector &&vec_copy)
+{
+   vector = std::move(vec_copy.vector);
 }
+
 
 /**
  * overload the equality operator
  * @param vector_copy The vector you want to be copied into this
  */
-Vector &Vector::operator=(const Vector &vector_copy){
-
-   int inc = 1;
-
-   dcopy_(&n,vector_copy.vector,&inc,vector,&inc);
+Vector &Vector::operator=(const Vector &vec_copy)
+{
+   assert(vec_copy.vector.size() == vector.size());
+   vector = vec_copy.vector;
 
    return *this;
+}
 
+Vector &Vector::operator=(Vector &&vec_copy)
+{
+   assert(vec_copy.vector.size() == vector.size());
+
+   vector = std::move(vec_copy.vector);
+
+   return *this;
 }
 
 /**
  * Make all the number in your vector equal to the number a, e.g. usefull for initialization (Vector M = 0)
  * @param a the number
  */
-Vector &Vector::operator=(double a){
-
-   for(int i = 0;i < n;++i)
+Vector &Vector::operator=(double a)
+{
+   for(unsigned int i = 0;i < vector.size();++i)
       vector[i] = a;
 
    return *this;
-
 }
 
 /**
  * overload the += operator for matrices
  * @param vector_pl The vector you want to add to this
  */
-Vector &Vector::operator+=(const Vector &vector_pl){
-
-   int inc = 1;
-   double alpha = 1.0;
-
-   daxpy_(&n,&alpha,vector_pl.vector,&inc,vector,&inc);
+Vector &Vector::operator+=(const Vector &vector_pl)
+{
+   daxpy(1,vector_pl);
 
    return *this;
-
 }
 
 /**
  * overload the -= operator for matrices
  * @param vector_pl The vector you want to deduct from this
  */
-Vector &Vector::operator-=(const Vector &vector_pl){
-
-   int inc = 1;
-   double alpha = -1.0;
-
-   daxpy_(&n,&alpha,vector_pl.vector,&inc,vector,&inc);
+Vector &Vector::operator-=(const Vector &vector_pl)
+{
+   daxpy(-1,vector_pl);
 
    return *this;
-
 }
 
 /**
@@ -136,30 +101,36 @@ Vector &Vector::operator-=(const Vector &vector_pl){
  * @param alpha the constant to multiply the vector_pl with
  * @param vector_pl the Vector to be multiplied by alpha and added to this
  */
-Vector &Vector::daxpy(double alpha,const Vector &vector_pl){
-
+Vector &Vector::daxpy(double alpha,const Vector &vector_pl)
+{
    int inc = 1;
+   int n = vector.size();
 
-   daxpy_(&n,&alpha,vector_pl.vector,&inc,vector,&inc);
+   daxpy_(&n,&alpha,vector_pl.vector.data(),&inc,vector.data(),&inc);
 
    return *this;
-
 }
 
 /**
  * /= operator overloaded: divide by a constant
  * @param c the number to divide your vector through
  */
-Vector &Vector::operator/=(double c){
-
-   int inc = 1;
-
-   double alpha = 1.0/c;
-
-   dscal_(&n,&alpha,vector,&inc);
+Vector &Vector::operator/=(double c)
+{
+   dscal(1.0/c);
 
    return *this;
+}
 
+/**
+ * *= operator overloaded: divide by a constant
+ * @param c the number to divide your vector through
+ */
+Vector &Vector::operator*=(double c)
+{
+   dscal(c);
+
+   return *this;
 }
 
 /**
@@ -167,10 +138,11 @@ Vector &Vector::operator/=(double c){
  * @param i row number
  * @return the entry on place i
  */
-double &Vector::operator[](int i){
+double &Vector::operator[](int i)
+{
+   assert(i<vector.size());
 
    return vector[i];
-
 }
 
 /**
@@ -178,151 +150,186 @@ double &Vector::operator[](int i){
  * @param i row number
  * @return the entry on place i
  */
-double Vector::operator[](int i) const{
+double Vector::operator[](int i) const
+{
+   assert(i<vector.size());
 
    return vector[i];
-
 }
 
 /**
  * Diagonalize the Matrix matrix when you have allready allocated the memory of the vector
  * on the correct dimension.
  */
-void Vector::diagonalize(Matrix &matrix){
-
-   char jobz = 'V';
-   char uplo = 'U';
-
-   int lwork = 3*n - 1;
-
-   double *work = new double [lwork];
-
-   int info;
-
-   dsyev_(&jobz,&uplo,&n,(matrix.gMatrix())[0],&n,vector,work,&lwork,&info);
-
-   delete [] work;
-
+void Vector::diagonalize(Matrix &matrix)
+{
+   *this = matrix.diagonalize();
 }
 
 /**
  * @return the underlying pointer to vector, useful for mkl and lapack applications
  */
-double *Vector::gVector(){
-
-   return vector;
-
+double *Vector::gVector()
+{
+   return vector.data();
 }
 
 /**
  * @return the underlying pointer to vector, useful for mkl and lapack applications: const version
  */
-const double *Vector::gVector() const{
-
-   return vector;
-
+const double *Vector::gVector() const
+{
+   return vector.data();
 }
 
 /**
  * @return the dimension of the vector
  */
-int Vector::gn() const{
-
-   return n;
-
+unsigned int Vector::gn() const
+{
+   return vector.size();
 }
 
 /**
  * @return the sum of all the elements in the vector
  */
-double Vector::sum() const{
-
+double Vector::sum() const
+{
    double ward = 0;
 
-   for(int i = 0;i < n;++i)
-      ward += vector[i];
+   for(auto &elem : vector)
+      ward += elem;
 
    return ward;
+} 
 
+double Vector::trace() const
+{
+   return sum();
 }
 
 /**
  * @return the logarithm of the product of all the elements in the vector (so the sum of all the logarithms)
  */
-double Vector::log_product() const{
-
+double Vector::log_product() const
+{
    double ward = 0;
 
-   for(int i = 0;i < n;++i)
-      ward += log(vector[i]);
+   for(auto &elem : vector)
+      ward += log(elem);
 
    return ward;
-
 }
 
 /**
  * @return inproduct of (*this) vector with vector_i
  * @param vector_i input vector
  */
-double Vector::ddot(const Vector &vector_i)const{
-
+double Vector::ddot(const Vector &vector_i) const
+{
    int inc = 1;
+   int n = vector.size();
 
-   return ddot_(&n,vector,&inc,vector_i.vector,&inc);
-
+   return ddot_(&n,vector.data(),&inc,vector_i.vector.data(),&inc);
 }
 
 /**
  * Scale the vector (*this) with parameter alpha
  * @param alpha scalefactor
  */
-void Vector::dscal(double alpha){
-
+void Vector::dscal(double alpha)
+{
    int inc = 1;
+   int n = vector.size();
 
-   dscal_(&n,&alpha,vector,&inc);
-
+   dscal_(&n,&alpha,vector.data(),&inc);
 }
 
 /**
  * Fill the vector with random numbers.
  */
-void Vector::fill_Random(){
-
+void Vector::fill_Random()
+{
    srand(time(NULL));
 
-   for(int i = 0;i < n;++i)
-      vector[i] = (double) rand()/RAND_MAX;
-
+   for(auto &elem : vector)
+      elem = (double) rand()/RAND_MAX;
 }
 
-ostream &operator<<(ostream &output,const Vector &vector_p){
-
+std::ostream &operator<<(std::ostream &output,const Vector &vector_p)
+{
    for(int i = 0;i < vector_p.gn();++i)
-      output << i << "\t" << vector_p[i] << endl;
+      output << i << "\t" << vector_p[i] << std::endl;
 
    return output;
-
 }
 
 /**
  * @return the minimal element present in this Vector object.
  * watch out, only works when Vector is filled with the eigenvalues of a diagonalized Matrix object
  */
-double Vector::min() const {
+double Vector::min() const
+{
+   double min = vector[0];
 
-   return vector[0];
+   for(unsigned int i=1;i<gn();i++)
+      if(vector[i]<min)
+         min = vector[i];
 
+   return min;
 }
 
 /**
  * @return the maximal element present in this Vector object.
  * watch out, only works when Vector is filled with the eigenvalues of a diagonalized Matrix object
  */
-double Vector::max() const {
+double Vector::max() const
+{
+   double max = vector[gn()-1];
 
-   return vector[n - 1];
+   for(int i=gn()-2;i>=0;i--)
+      if(vector[i]>max)
+         max = vector[i];
 
+   return max;
+}
+
+void Vector::invert()
+{
+   for(int i = 0;i < gn();++i)
+      vector[i] = 1.0/vector[i];
+}
+
+void Vector::sqrt(int option)
+{
+   if(option == 1)
+      for(int i = 0;i < gn();++i)
+         vector[i] = std::sqrt(vector[i]);
+   else 
+      for(int i = 0;i < gn();++i)
+         vector[i] = 1.0/std::sqrt(vector[i]);
+}
+
+void Vector::symmetrize()
+{
+}
+
+Vector &Vector::mprod(const Vector &x,const Vector &y)
+{
+   assert(x.gn() == gn() && y.gn() == gn());
+
+   for(int i = 0;i < gn();++i)
+      vector[i] = x[i] * y[i];
+
+   return *this;
+}
+
+/**
+ * Sort the vector, small to large
+ */
+void Vector::sort()
+{
+   std::sort(vector.begin(), vector.end());
 }
 
 /* vim: set ts=3 sw=3 expandtab :*/

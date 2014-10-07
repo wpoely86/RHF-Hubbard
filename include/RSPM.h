@@ -2,9 +2,6 @@
 #define RSPM_H
 
 #include <iostream>
-#include <fstream>
-
-using std::ostream;
 
 #include "Matrix.h"
 
@@ -27,7 +24,7 @@ class RSPM : public Matrix {
     * @param output The stream to which you are writing (e.g. cout)
     * @param spm_p de RSPM you want to print
     */
-   friend ostream &operator<<(ostream &output,RSPM &spm_p);
+   friend std::ostream &operator<<(std::ostream &output,RSPM &spm_p);
 
    public:
       
@@ -38,7 +35,7 @@ class RSPM : public Matrix {
       RSPM(const RSPM &);
 
       //destructor
-      virtual ~RSPM();
+      virtual ~RSPM() = default;
 
       using Matrix::operator=;
 
@@ -56,9 +53,11 @@ class RSPM : public Matrix {
 
       void relax(const DIIS &);
 
-      static void init(int,int);
+      static void init(int,int,double);
 
       double energy() const;
+
+      static void setshift(double shift_i);
 
    private:
 
@@ -67,6 +66,8 @@ class RSPM : public Matrix {
 
       //!nr of particles
       static int N;
+
+      static double shift;
 
 };
 
