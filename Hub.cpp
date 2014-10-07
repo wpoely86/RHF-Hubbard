@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "include.h"
 
 double Hubbard::U = 0;
