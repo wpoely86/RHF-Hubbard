@@ -98,7 +98,7 @@ void DIIS::construct()
    b[FD.size()] = 1;
 
    //now solve!
-//   B->solve(b);
+   B->solve(b);
 }
 
 /**
