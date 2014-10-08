@@ -42,6 +42,7 @@ int main(int argc, char **argv)
    double U = 10; // on-site interaction
    double step = 0.1;
    double shift = 0;
+   bool UseMomSpace = true; // the default
 
    struct option long_options[] =
    {
@@ -49,12 +50,13 @@ int main(int argc, char **argv)
       {"sites",  required_argument, 0, 'm'},
       {"interaction", required_argument, 0, 'U'},
       {"step", required_argument, 0, 's'},
+      {"site-space", no_argument, 0, 'b'},
       {"help",  no_argument, 0, 'h'},
       {0, 0, 0, 0}
    };
 
    int i,j;
-   while( (j = getopt_long (argc, argv, "hn:m:U:s:", long_options, &i)) != -1)
+   while( (j = getopt_long (argc, argv, "hn:m:U:s:b", long_options, &i)) != -1)
       switch(j)
       {
          case 'h':
@@ -65,6 +67,7 @@ int main(int argc, char **argv)
                "    -m, --sites=sites            Set the number of sites\n"
                "    -U, --interaction=U          Set the interaction strength\n"
                "    -s, --step=s                 Set the step size. Will go from 0 to U in s steps\n"
+               "    -b, --site-space             Use the site basis space instead of momentum space\n"
                "    -h, --help                   Display this help\n"
                "\n";
             return 0;
@@ -91,13 +94,21 @@ int main(int argc, char **argv)
          case 's':
             step = atof(optarg);
             break;
+         case 'b':
+            UseMomSpace = false;
+            break;
       }
 
    cout << "Starting with M=" << M << " N=" << N << " U=" << U << endl;
 
    Hubbard::init(U,M);
 
-   Hubbard::UseMomSpace();
+   if(UseMomSpace)
+   {
+      cout << "Working in momentum space" << endl;
+      Hubbard::UseMomSpace();
+   } else
+      cout << "Working in site space" << endl;
 
    RSPM::init(M,N,shift);
 
